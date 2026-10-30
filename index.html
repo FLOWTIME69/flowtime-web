@@ -712,7 +712,8 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
     var raf=0;
     function mk(cls,i,tk){var l=document.createElement('span');l.className=cls;var li=document.createElement('span');li.className='li';li.style.setProperty('--i',i);fill(li,tk);l.appendChild(li);return l}
     function fill(line,tk){tk.forEach(function(k,i){if(i)line.appendChild(document.createTextNode(' '));k.n.forEach(function(x){line.appendChild(x.cloneNode(true))})})}
-    function layout(){
+    function layout(){var y0=scrollY;layout0();if(Math.abs(scrollY-y0)>1)window.scrollTo(0,y0)}
+    function layout0(){
       raf=0;if(!el.offsetWidth)return;
       var W=el.clientWidth;el.innerHTML='';el.style.fontSize='';
       var m=document.createElement('div');m.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;left:0;top:0';el.style.position='relative';el.appendChild(m);
@@ -746,8 +747,8 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
         var li=document.createElement('span');li.className='li';li.style.setProperty('--i',ci++);fill(li,toks.slice(c[0],c[1]));line.appendChild(li);el.appendChild(line)});
       el.appendChild(mk('ln last',ci,toks.slice(N)));
     }
-    function q(){if(!raf)raf=requestAnimationFrame(layout)}
-    addEventListener('resize',q);
+    var lw=innerWidth;function q(){if(!raf)raf=requestAnimationFrame(layout)}
+    addEventListener('resize',function(){if(innerWidth!==lw){lw=innerWidth;q()}});
     new MutationObserver(function(){setTimeout(q,60)}).observe(document.body,{attributes:true,attributeFilter:['data-v']});
     if(document.fonts&&document.fonts.ready)document.fonts.ready.then(q);
     setTimeout(q,400);q();
@@ -765,7 +766,6 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
     var intro=root.querySelector('.intro'),hz=root.querySelector('.hz'),pps=[].slice.call(root.querySelectorAll('.pp2')),mvs=[].slice.call(root.querySelectorAll('.mv .fill')),somos=root.querySelector('.somos');
     // palabras / líneas
     function words(el){if(el._w)return;var t=el.textContent.trim().split(/\s+/);el.innerHTML=t.map(function(w){return '<span class="w">'+w+'</span>'}).join(' ');el._w=[].slice.call(el.querySelectorAll('.w'))}
-    mvs.forEach(words);
     var lined=[].slice.call(root.querySelectorAll('.pp2 p'));
     lined.forEach(function(p){p._t=p.textContent.trim()});
     function split(p){
@@ -791,8 +791,7 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
         var end=Math.max(0,intro.offsetHeight-vh);sv(document.documentElement,'--endY',end+'px');document.body.classList.toggle('hdfree',reduced||scrollY>=end)}
       // somos
       // misión / visión
-      mvs.forEach(function(el){var r=el.getBoundingClientRect(),p=reduced?1:cl((vh*.9-r.top)/(r.height+vh*.42)),n=el._w.length;
-        el._w.forEach(function(w,i){var o=(.13+.87*cl((p*(n+9)-i)/9)).toFixed(2);if(w._o!==o){w._o=o;w.style.opacity=o}})});
+      
       // tira horizontal
       if(hz&&!st){var p=stick(hz),tr=hz.querySelector('.track'),dx=Math.max(0,tr.scrollWidth-innerWidth+0);
         var q=eio(seg(p,.04,.94));tr.style.transform='translate3d('+(-dx*q).toFixed(1)+'px,0,0)';sv(hz,'--hp',seg(p,.04,.94));
@@ -806,10 +805,10 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
         var ps=el.querySelectorAll('p');ps.forEach(function(q,i){if(q._l)reveal(q._l,seg(p,.42+i*.14,.62+i*.14))})});
     }
     function q(){if(!raf)raf=requestAnimationFrame(update)}
-    function resize(){mode();splitAll()}
-    addEventListener('scroll',q,{passive:true});addEventListener('resize',function(){clearTimeout(resize._t);resize._t=setTimeout(resize,120)});
-    new MutationObserver(function(){setTimeout(function(){resize()},40)}).observe(document.body,{attributes:true,attributeFilter:['data-v']});
-    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
+    var lastW=-1;function resize(force){var y=scrollY,w=innerWidth;mode();if(force===true||w!==lastW){lastW=w;splitAll()}if(on()&&Math.abs(scrollY-y)>1)window.scrollTo(0,y)}
+    addEventListener('scroll',q,{passive:true});addEventListener('resize',function(){clearTimeout(resize._t);resize._t=setTimeout(function(){resize(false)},120)});
+    new MutationObserver(function(){setTimeout(function(){resize(true)},40)}).observe(document.body,{attributes:true,attributeFilter:['data-v']});
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){resize(true)});
 
     // scroll suave con inercia (solo en esta página, ratón/trackpad)
     (function(){
@@ -833,7 +832,7 @@ a,button,.thumb,.wi,.wv,video{-webkit-tap-highlight-color:transparent}
       },{passive:false});
       addEventListener('scroll',function(){if(!run){tgt=cur=scrollY}},{passive:true});
     })();
-    mode();splitAll();
+    mode();lastW=innerWidth;splitAll();
     // somos: entra al llegar
     if(somos&&'IntersectionObserver' in window&&!reduced){document.documentElement.classList.add('rv-on');
       var io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{threshold:.25});io.observe(somos)}
@@ -1879,4 +1878,4 @@ if(f404)new Bola(f404,'loop');
   document.addEventListener('click',function(e){var h=pend;pend=null;if(h)open(h.id,h.w)});
 })();
 </script>
-<style id="fix-nos-m">@media (max-width:760px){.mv .w{will-change:auto}body[data-v="nosotros"] header,body.hdfree[data-v="nosotros"] header{position:absolute;top:0;flex-wrap:wrap;row-gap:0;align-items:flex-start;align-content:flex-start;pointer-events:none}body[data-v="nosotros"] header::after{content:"";flex:0 0 100%;height:var(--endY,0px)}body[data-v="nosotros"] header>*{position:sticky;top:16px;pointer-events:auto}}</style>
+<style id="fix-nos-m">.mv .fill,.mv .w{opacity:1!important}@media (max-width:760px){.mv .w{will-change:auto}body[data-v="nosotros"] header,body.hdfree[data-v="nosotros"] header{position:absolute;top:0;flex-wrap:wrap;row-gap:0;align-items:flex-start;align-content:flex-start;pointer-events:none}body[data-v="nosotros"] header::after{content:"";flex:0 0 100%;height:var(--endY,0px)}body[data-v="nosotros"] header>*{position:sticky;top:16px;pointer-events:auto}}</style>
