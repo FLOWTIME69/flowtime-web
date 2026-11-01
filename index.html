@@ -1839,8 +1839,8 @@ if(f404)new Bola(f404,'loop');
 /* móvil · pie de Proyectos y Nosotros algo más bajo */
 @media (max-width:760px){
   :is(#v-pro,#v-nos) .mosaic .mz-foot{--bw:48px;min-height:calc(var(--bw)*1.243 + 21px);padding:4px var(--gut) 8px}
-  :is(#v-pro,#v-nos) .mz-foot .bola-pn{bottom:9px!important}
-  :is(#v-pro,#v-nos) .mz-foot .fm,:is(#v-pro,#v-nos) .mz-foot .fs{bottom:calc(0px + var(--bw)*.6215)}
+  :is(#v-pro,#v-nos) .mz-foot .bola-pn{bottom:12px!important}
+  :is(#v-pro,#v-nos) .mz-foot .fm,:is(#v-pro,#v-nos) .mz-foot .fs{bottom:calc((var(--bw)*1.243 + 21px)/2)}
   :is(#v-pro,#v-nos) .bola-foot .mz-foot .fm,:is(#v-pro,#v-nos) .mosaic .mz-foot .fm{font-size:clamp(8px,2.2vw,9.2px)}
 }
 /* móvil · Inicio: reproduce (mudo) el vídeo que está hacia el centro de la pantalla */
@@ -1912,12 +1912,6 @@ html.ytc,html.ytc *{cursor:pointer!important}
   #ytm .ytx{width:38px;height:38px;font-size:17px;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right))}
 }
 @media (prefers-reduced-motion:reduce){#ytm,#ytm .ytw,#ytm .ytc{transition:none}#ytm .ytcard,#ytm .yts{animation:none}#ytm .ytx:hover{transform:none}}
-
-/* velo: tapa la franja de título/canal arriba y el logo de YouTube abajo mientras salen al empezar; luego se retira */
-.ytcard::before,.ytcard::after{content:"";position:absolute;left:0;right:0;z-index:1;pointer-events:none;opacity:1;transition:opacity .8s ease}
-.ytcard::before{top:0;height:24%;background:linear-gradient(#000 62%,rgba(0,0,0,0))}
-.ytcard::after{bottom:0;height:20%;background:linear-gradient(rgba(0,0,0,0),#000 38%)}
-.ytcard:not(.vl)::before,.ytcard:not(.vl)::after{opacity:0}
 </style>
 <script id="ytm-js">
 (function(){
@@ -1982,7 +1976,7 @@ html.ytc,html.ytc *{cursor:pointer!important}
   }
   function wake(){m.classList.remove('idle');clearTimeout(idleT);if(playing())idleT=setTimeout(function(){m.classList.add('idle')},2600)}
   function toggle(){
-    if(ended){ended=false;card.classList.add('vl');send('seekTo',[0,true]);send('playVideo');st=1;ts=performance.now();cur=0;ui();return}
+    if(ended){ended=false;send('seekTo',[0,true]);send('playVideo');st=1;ts=performance.now();cur=0;ui();return}
     if(playing()){send('pauseVideo');st=2;cur+=(ts?(performance.now()-ts)/1000:0);ts=0}else{send('playVideo');st=1;ts=performance.now()}
     ui();wake()
   }
@@ -1998,7 +1992,6 @@ html.ytc,html.ytc *{cursor:pointer!important}
       if(typeof info.playerState==='number')setState(info.playerState)
     }
     if(dur>0&&st===1&&!ended&&cur>=dur-.45){ended=true;send('seekTo',[0,true]);send('pauseVideo');cur=0;st=2;ts=0;m.classList.remove('idle')}
-    if(st===1&&cur>=4.6)card.classList.remove('vl');
     paint();ui()
   }
   function polish(){send('unloadModule',['captions']);send('unloadModule',['cc']);send('setOption',['captions','track',{}]);send('setPlaybackQuality',['hd1080'])}
@@ -2031,10 +2024,10 @@ html.ytc,html.ytc *{cursor:pointer!important}
     mt.textContent=mm.t;mc.textContent=mm.c||'—';mk.textContent=mm.k||'—';
     m.classList.remove('nojs','paused','idle');
     cur=0;dur=0;st=-1;muted=false;ended=false;gotMsg=false;ts=0;wasPl=false;
-    card.classList.add('vl');build(id,false);
+    build(id,false);
     clearTimeout(failT);
     /* si el reproductor no responde a los controles propios, se enseña el de YouTube tal cual */
-    failT=setTimeout(function(){if(!gotMsg&&m.classList.contains('on')){m.classList.add('nojs');card.classList.remove('vl');build(curId,true)}},4200);
+    failT=setTimeout(function(){if(!gotMsg&&m.classList.contains('on')){m.classList.add('nojs');build(curId,true)}},4200);
     ol.href='https://www.youtube.com/watch?v='+id;
     ui();paint();
     m.classList.add('on');document.documentElement.style.overflow='hidden';
@@ -2157,5 +2150,8 @@ html.ytc,html.ytc *{cursor:pointer!important}
   addEventListener('scroll',req,{passive:true});addEventListener('resize',req);addEventListener('hashchange',req);addEventListener('pointerdown',req,{passive:true});
   new MutationObserver(req).observe(document.body,{attributes:true,attributeFilter:['data-v']});
   var m=document.getElementById('ytm');if(m)new MutationObserver(req).observe(m,{attributes:true,attributeFilter:['class']});
-  setTimeout(req,600);setTimeout(req,1800)
+  setTimeout(req,600);setTimeout(req,1800);
+  /* calienta la conexión con YouTube en la primera interacción, para que el reproductor abra antes */
+  function pc(){removeEventListener('pointerdown',pc,true);removeEventListener('touchstart',pc,true);['https://www.youtube-nocookie.com','https://i.ytimg.com'].forEach(function(u){var l=document.createElement('link');l.rel='preconnect';l.href=u;document.head.appendChild(l)})}
+  addEventListener('pointerdown',pc,true);addEventListener('touchstart',pc,true)
 })()</script>
