@@ -1839,8 +1839,9 @@ if(f404)new Bola(f404,'loop');
 /* móvil · pie de Proyectos y Nosotros algo más bajo */
 @media (max-width:760px){
   :is(#v-pro,#v-nos) .mosaic .mz-foot{--bw:48px;min-height:calc(var(--bw)*1.243 + 21px);padding:4px var(--gut) 8px}
-  :is(#v-pro,#v-nos) .mz-foot .bola-pn{bottom:15px!important}
-  :is(#v-pro,#v-nos) .mz-foot .fm,:is(#v-pro,#v-nos) .mz-foot .fs{bottom:calc(6px + var(--bw)*.6215)}
+  :is(#v-pro,#v-nos) .mz-foot .bola-pn{bottom:9px!important}
+  :is(#v-pro,#v-nos) .mz-foot .fm,:is(#v-pro,#v-nos) .mz-foot .fs{bottom:calc(0px + var(--bw)*.6215)}
+  :is(#v-pro,#v-nos) .bola-foot .mz-foot .fm,:is(#v-pro,#v-nos) .mosaic .mz-foot .fm{font-size:clamp(8px,2.2vw,9.2px)}
 }
 /* móvil · Inicio: reproduce (mudo) el vídeo que está hacia el centro de la pantalla */
 .thumb.ap img{transform:scale(1.08)}
@@ -1911,6 +1912,12 @@ html.ytc,html.ytc *{cursor:pointer!important}
   #ytm .ytx{width:38px;height:38px;font-size:17px;top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right))}
 }
 @media (prefers-reduced-motion:reduce){#ytm,#ytm .ytw,#ytm .ytc{transition:none}#ytm .ytcard,#ytm .yts{animation:none}#ytm .ytx:hover{transform:none}}
+
+/* velo: tapa la franja de título/canal arriba y el logo de YouTube abajo mientras salen al empezar; luego se retira */
+.ytcard::before,.ytcard::after{content:"";position:absolute;left:0;right:0;z-index:1;pointer-events:none;opacity:1;transition:opacity .8s ease}
+.ytcard::before{top:0;height:24%;background:linear-gradient(#000 62%,rgba(0,0,0,0))}
+.ytcard::after{bottom:0;height:20%;background:linear-gradient(rgba(0,0,0,0),#000 38%)}
+.ytcard:not(.vl)::before,.ytcard:not(.vl)::after{opacity:0}
 </style>
 <script id="ytm-js">
 (function(){
@@ -1975,7 +1982,7 @@ html.ytc,html.ytc *{cursor:pointer!important}
   }
   function wake(){m.classList.remove('idle');clearTimeout(idleT);if(playing())idleT=setTimeout(function(){m.classList.add('idle')},2600)}
   function toggle(){
-    if(ended){ended=false;send('seekTo',[0,true]);send('playVideo');st=1;ts=performance.now();cur=0;ui();return}
+    if(ended){ended=false;card.classList.add('vl');send('seekTo',[0,true]);send('playVideo');st=1;ts=performance.now();cur=0;ui();return}
     if(playing()){send('pauseVideo');st=2;cur+=(ts?(performance.now()-ts)/1000:0);ts=0}else{send('playVideo');st=1;ts=performance.now()}
     ui();wake()
   }
@@ -1990,21 +1997,26 @@ html.ytc,html.ytc *{cursor:pointer!important}
       if(typeof info.muted==='boolean')muted=info.muted;
       if(typeof info.playerState==='number')setState(info.playerState)
     }
+    if(dur>0&&st===1&&!ended&&cur>=dur-.45){ended=true;send('seekTo',[0,true]);send('pauseVideo');cur=0;st=2;ts=0;m.classList.remove('idle')}
+    if(st===1&&cur>=4.6)card.classList.remove('vl');
     paint();ui()
   }
+  function polish(){send('unloadModule',['captions']);send('unloadModule',['cc']);send('setOption',['captions','track',{}]);send('setPlaybackQuality',['hd1080'])}
+  function fit(){if(!ifr||ifr.dataset.fit!=='1')return;var w=fr.clientWidth||ifr.parentNode.clientWidth;if(w)ifr.style.transform='scale('+(w/1920)+')'}
   function setState(s){
     if(s===st)return;st=s;ts=performance.now();
     if(s===0&&!ended){ended=true;send('seekTo',[0,true]);send('pauseVideo');cur=0;st=2;ts=0;ui();m.classList.remove('idle')}
-    else if(s===1||s===3){ended=false}
+    else if(s===1||s===3){ended=false;if(s===1){polish();setTimeout(polish,900);if(ifr)setTimeout(function(){if(ifr)ifr.style.opacity='1'},300)}}
   }
-  window.addEventListener('message',onMsg);
+  window.addEventListener('message',onMsg);addEventListener('resize',fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(fr);
 
   /* ---------- abrir / cerrar ---------- */
   function build(id,controls){
     var f=document.createElement('iframe'),q=controls?'controls=1':'controls=0&disablekb=1&fs=0&iv_load_policy=3';
-    f.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&cc_load_policy=0&'+q+'&origin='+encodeURIComponent(location.origin==='null'?'':location.origin);
+    f.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1&modestbranding=1&enablejsapi=1&cc_load_policy=0&hl=es&cc_lang_pref=es&vq=hd1080&'+q+'&origin='+encodeURIComponent(location.origin==='null'?'':location.origin);
     f.title='Vídeo de Flowtime';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.setAttribute('allowfullscreen','');f.referrerPolicy='strict-origin-when-cross-origin';
-    fr.innerHTML='';fr.appendChild(f);ifr=f;
+    if(!controls){f.dataset.fit='1';f.style.cssText='position:absolute;left:0;top:0;width:1920px;height:1080px;inset:auto;transform-origin:0 0;border:0;pointer-events:none;opacity:0;transition:opacity .45s ease'}
+    fr.innerHTML='';fr.appendChild(f);ifr=f;fit();setTimeout(fit,60);
     f.addEventListener('load',function(){
       var n=0;clearInterval(listenT);
       listenT=setInterval(function(){
@@ -2019,10 +2031,10 @@ html.ytc,html.ytc *{cursor:pointer!important}
     mt.textContent=mm.t;mc.textContent=mm.c||'—';mk.textContent=mm.k||'—';
     m.classList.remove('nojs','paused','idle');
     cur=0;dur=0;st=-1;muted=false;ended=false;gotMsg=false;ts=0;wasPl=false;
-    build(id,false);
+    card.classList.add('vl');build(id,false);
     clearTimeout(failT);
     /* si el reproductor no responde a los controles propios, se enseña el de YouTube tal cual */
-    failT=setTimeout(function(){if(!gotMsg&&m.classList.contains('on')){m.classList.add('nojs');build(curId,true)}},4200);
+    failT=setTimeout(function(){if(!gotMsg&&m.classList.contains('on')){m.classList.add('nojs');card.classList.remove('vl');build(curId,true)}},4200);
     ol.href='https://www.youtube.com/watch?v='+id;
     ui();paint();
     m.classList.add('on');document.documentElement.style.overflow='hidden';
@@ -2130,6 +2142,10 @@ html.ytc,html.ytc *{cursor:pointer!important}
     var vh=innerHeight,mid=vh/2,best=null,bd=1e9;
     document.querySelectorAll('#v-home .thumb').forEach(function(t){var r=t.getBoundingClientRect();if(r.bottom<vh*.15||r.top>vh*.85)return;
       var d=Math.abs((r.top+r.bottom)/2-mid);if(d<bd){bd=d;best=t}});
+    var all=document.querySelectorAll('#v-home .thumb'),de=document.documentElement;
+    if(all.length){
+      if(scrollY<10)best=all[0];
+      else if(scrollY+vh>=Math.max(de.scrollHeight,document.body.scrollHeight)-70)best=all[all.length-1]}
     if(!best||best===cur)return;
     /* al llegar a Inicio (o al terminar la intro) espera ~2,5 s antes de arrancar el primero; si el usuario ya ha movido la página, arranca al momento */
     if(!ready&&scrollY<10){
