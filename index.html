@@ -1914,7 +1914,6 @@ html.ytc,html.ytc *{cursor:pointer!important}
 @media (prefers-reduced-motion:reduce){#ytm,#ytm .ytw,#ytm .ytc{transition:none}#ytm .ytcard,#ytm .yts{animation:none}#ytm .ytx:hover{transform:none}}
 /* pantalla completa girada (iPhone y navegadores sin fullscreen): la tarjeta se tumba 90° y ocupa toda la pantalla */
 #ytm.prot .ytcard{position:fixed;left:50%;top:50%;width:100dvh;height:100dvw;aspect-ratio:auto;max-width:none;transform:translate(-50%,-50%) rotate(90deg);border-radius:0;animation:none;z-index:5;box-shadow:none;background:#000}
-#ytm.prot .ytfr{position:absolute;left:50%;top:50%;width:min(100dvh,calc(100dvw * 1.7778));aspect-ratio:16/9;transform:translate(-50%,-50%)}
 #ytm.prot .ytm-meta,#ytm.prot .yto{display:none}
 #ytm.prot .ytx{display:none}
 </style>
@@ -2000,13 +1999,13 @@ html.ytc,html.ytc *{cursor:pointer!important}
     paint();ui()
   }
   function polish(){send('unloadModule',['captions']);send('unloadModule',['cc']);send('setOption',['captions','track',{}]);send('setPlaybackQuality',['hd1080'])}
-  function fit(){if(!ifr||ifr.dataset.fit!=='1')return;var w=fr.clientWidth||ifr.parentNode.clientWidth;if(w)ifr.style.transform='scale('+(w/1920)+')'}
+  function fit(){if(!ifr||ifr.dataset.fit!=='1')return;var w=card.clientWidth,h=card.clientHeight;if(!w||!h)return;var s=Math.min(w/1920,h/1080);ifr.style.left=((w-1920*s)/2)+'px';ifr.style.top=((h-1080*s)/2)+'px';ifr.style.transform='scale('+s+')'}
   function setState(s){
     if(s===st)return;st=s;ts=performance.now();
     if(s===0&&!ended){ended=true;send('seekTo',[0,true]);send('pauseVideo');cur=0;st=2;ts=0;ui();m.classList.remove('idle')}
     else if(s===1||s===3){ended=false;if(s===1){polish();setTimeout(polish,900);if(ifr)setTimeout(function(){if(ifr)ifr.style.opacity='1'},300)}}
   }
-  window.addEventListener('message',onMsg);addEventListener('resize',fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(fr);
+  window.addEventListener('message',onMsg);addEventListener('resize',fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(card);
 
   /* ---------- abrir / cerrar ---------- */
   function build(id,controls){
@@ -2071,7 +2070,7 @@ html.ytc,html.ytc *{cursor:pointer!important}
     wake()
   });
   addEventListener('resize',function(){if(m.classList.contains('prot')&&innerWidth>innerHeight)pseudo(false)});
-  function fsChange(){var fe=document.fullscreenElement||document.webkitFullscreenElement;bFs.textContent=fe?'Salir':'Pantalla completa';if(!fe)unlockO();setTimeout(fit,60)}
+  function fsChange(){var fe=document.fullscreenElement||document.webkitFullscreenElement;bFs.textContent=fe?'Salir':'Pantalla completa';if(!fe)unlockO();setTimeout(fit,60);setTimeout(fit,350);setTimeout(fit,900)}
   document.addEventListener('fullscreenchange',fsChange);document.addEventListener('webkitfullscreenchange',fsChange);
   function seekAt(x){var r=pr.getBoundingClientRect(),p=Math.max(0,Math.min(1,(x-r.left)/r.width));if(!dur)return;var s=p*dur;cur=s;ts=performance.now();ended=false;send('seekTo',[s,true]);paint()}
   var drag=false;
